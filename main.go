@@ -183,7 +183,9 @@ func main() {
 		MaxAge:   2592000, // 30 days
 		HttpOnly: true,
 		Secure:   false,
-		SameSite: http.SameSiteStrictMode,
+		// Lax allows session cookies on top-level redirects from payment/OAuth
+		// providers; Strict drops them and users appear logged out after checkout.
+		SameSite: http.SameSiteLaxMode,
 	})
 	server.Use(sessions.Sessions("session", store))
 
