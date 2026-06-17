@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useActiveChatKey } from '@/features/chat/hooks/use-active-chat-key'
 import { useChatPresets } from '@/features/chat/hooks/use-chat-presets'
-import { resolveChatUrlAsync, chatLinkRequiresApiKey, chatLinkRequiresTrustToken } from '@/features/chat/lib/chat-links'
+import { resolveChatUrlAsync, chatLinkRequiresApiKey } from '@/features/chat/lib/chat-links'
 
 export const Route = createFileRoute('/_authenticated/chat2link')({
   component: Chat2LinkPage,
@@ -40,9 +40,7 @@ function Chat2LinkPage() {
   )
 
   const requiresActiveKey = Boolean(
-    firstWebPreset &&
-      chatLinkRequiresApiKey(firstWebPreset.url) &&
-      !chatLinkRequiresTrustToken(firstWebPreset.url)
+    firstWebPreset && chatLinkRequiresApiKey(firstWebPreset.url)
   )
 
   const { data: activeKey, error: keyError } = useActiveChatKey(requiresActiveKey)
