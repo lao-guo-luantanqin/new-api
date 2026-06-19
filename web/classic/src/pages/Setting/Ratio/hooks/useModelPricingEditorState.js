@@ -651,7 +651,7 @@ export function useModelPricingEditorState({
     };
 
     const names = new Set([
-      ...candidateModelNames,
+      ...(filterMode === 'unset' ? candidateModelNames : []),
       ...Object.keys(sourceMaps.ModelPrice),
       ...Object.keys(sourceMaps.ModelRatio),
       ...Object.keys(sourceMaps.CompletionRatio),

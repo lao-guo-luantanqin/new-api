@@ -83,7 +83,7 @@ func (mi *Model) Update() error {
 }
 
 func (mi *Model) Delete() error {
-	return DB.Delete(mi).Error
+	return DB.Unscoped().Delete(mi).Error
 }
 
 func GetVendorModelCounts() (map[int64]int64, error) {
@@ -193,17 +193,31 @@ func GetPreferredModelOwnerChannelTypes(modelNames []string, groups []string) (m
 }
 
 func SearchModels(keyword string, vendor string, offset int, limit int) ([]*Model, int64, error) {
+	return ListModels(keyword, vendor, "", "", offset, limit)
+}
+
+func ListModels(keyword string, vendor string, status string, syncOfficial string, offset int, limit int) ([]*Model, int64, error) {
 	var models []*Model
 	db := DB.Model(&Model{})
 	if keyword != "" {
 		like := "%" + keyword + "%"
 		db = db.Where("model_name LIKE ? OR description LIKE ? OR tags LIKE ?", like, like, like)
 	}
-	if vendor != "" {
+	if vendor != "" && vendor != "all" {
 		if vid, err := strconv.Atoi(vendor); err == nil {
 			db = db.Where("models.vendor_id = ?", vid)
 		} else {
 			db = db.Joins("JOIN vendors ON vendors.id = models.vendor_id").Where("vendors.name LIKE ?", "%"+vendor+"%")
+		}
+	}
+	if status != "" && status != "all" {
+		if s, err := strconv.Atoi(status); err == nil {
+			db = db.Where("models.status = ?", s)
+		}
+	}
+	if syncOfficial != "" && syncOfficial != "all" {
+		if s, err := strconv.Atoi(syncOfficial); err == nil {
+			db = db.Where("models.sync_official = ?", s)
 		}
 	}
 	var total int64
