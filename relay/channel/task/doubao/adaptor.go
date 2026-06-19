@@ -132,18 +132,78 @@ func (a *TaskAdaptor) BuildRequestHeader(_ *gin.Context, req *http.Request, _ *r
 	return nil
 }
 
-// EstimateBilling 检测请求 metadata 中是否包含视频输入，返回视频折扣 OtherRatio。
+// EstimateBilling 按官方档位估算：秒数 × 分辨率 × 含视频参考倍率。
 func (a *TaskAdaptor) EstimateBilling(c *gin.Context, info *relaycommon.RelayInfo) map[string]float64 {
 	req, err := relaycommon.GetTaskRequest(c)
 	if err != nil {
 		return nil
 	}
+
+	pricingModel := resolvePricingModel(info.OriginModelName, info.UpstreamModelName)
+	seconds := parseDurationSeconds(&req)
+	resolution := parseResolution(&req)
+
+	ratios := map[string]float64{
+		"seconds": float64(seconds),
+	}
+	if resRatio := GetResolutionRatio(pricingModel, resolution); resRatio != 1 {
+		ratios["resolution"] = resRatio
+	}
+
 	if hasVideoInMetadata(req.Metadata) {
-		if ratio, ok := GetVideoInputRatio(info.OriginModelName); ok {
-			return map[string]float64{"video_input": ratio}
+		if ratio, ok := GetVideoInputCostRatio(pricingModel); ok {
+			ratios["video_input"] = ratio
 		}
 	}
-	return nil
+	return ratios
+}
+
+// AdjustBillingOnComplete 按实际输出时长与 ModelPrice（720p 无参考 元/秒 折算 USD/秒）结算。
+func (a *TaskAdaptor) AdjustBillingOnComplete(task *model.Task, taskResult *relaycommon.TaskInfo) int {
+	bc := task.PrivateData.BillingContext
+	if bc == nil || bc.ModelPrice <= 0 {
+		return 0
+	}
+	if _, ok := bc.OtherRatios["seconds"]; !ok {
+		return 0
+	}
+
+	actualSeconds := durationFromTaskData(task.Data)
+	if actualSeconds <= 0 && taskResult != nil && taskResult.CompletionTokens > 0 {
+		actualSeconds = taskResult.CompletionTokens
+	}
+	if actualSeconds <= 0 {
+		return 0
+	}
+
+	groupRatio := bc.GroupRatio
+	if groupRatio <= 0 {
+		groupRatio = 1
+	}
+
+	multiplier := 1.0
+	for key, ratio := range bc.OtherRatios {
+		if key == "seconds" || ratio == 1.0 || ratio <= 0 {
+			continue
+		}
+		multiplier *= ratio
+	}
+
+	return int(bc.ModelPrice * common.QuotaPerUnit * groupRatio * float64(actualSeconds) * multiplier)
+}
+
+func durationFromTaskData(data []byte) int {
+	if len(data) == 0 {
+		return 0
+	}
+	var res responseTask
+	if err := common.Unmarshal(data, &res); err != nil {
+		return 0
+	}
+	if res.Duration > 0 {
+		return res.Duration
+	}
+	return 0
 }
 
 // hasVideoInMetadata 直接检查 metadata 的 content 数组是否包含 video_url 条目，

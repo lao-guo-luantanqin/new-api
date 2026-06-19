@@ -280,6 +280,19 @@ var defaultModelRatio = map[string]float64{
 	"deepseek-ai/DeepSeek-R1":                 0.8,
 	"deepseek-ai/DeepSeek-V3-0324":            0.8,
 	"deepseek-ai/DeepSeek-V3.1":               0.8,
+	// Volcengine 文本/Embedding — 元/百万 token ÷ 14
+	"doubao-seed-2-0-pro":             3.2 / 14,
+	"doubao-seed-2-0-lite-260428":     0.6 / 14,
+	"doubao-seed-2-0-mini-260428":     0.2 / 14,
+	"doubao-seed-1-8-251215":          0.8 / 14,
+	"doubao-seed-1-6-250615":          0.8 / 14,
+	"doubao-seed-1-6-flash-250615":    0.15 / 14,
+	"doubao-1.5-pro-32k":              0.8 / 14,
+	"doubao-1.5-lite-32k":             0.3 / 14,
+	"deepseek-v3.2":                   2.0 / 14,
+	"deepseek-r1":                     4.0 / 14,
+	"glm-4.7":                         2.0 / 14,
+	"doubao-embedding-vision":         0.7 / 14,
 }
 
 var defaultModelPrice = map[string]float64{
@@ -314,6 +327,22 @@ var defaultModelPrice = map[string]float64{
 	"veo-3.0-fast-generate-001":      0.15,
 	"veo-3.1-generate-preview":       0.4,
 	"veo-3.1-fast-generate-preview":  0.15,
+	// Volcengine Seedance — 720p/16:9 无参考 元/秒 ÷ 7.3（秒单价 USD），见火山方舟定价文档
+	"doubao-seedance-2-0-260128":      0.994 / USD2RMB,
+	"doubao-seedance-2-0-fast-260128": 0.800 / USD2RMB,
+	"doubao-seedance-2-0-mini":        0.496 / USD2RMB,
+	"doubao-seedance-1-5-pro-251215":  0.172 / USD2RMB, // 720p 无声 5s 示例 0.86 元
+	"doubao-seedance-1-0-pro-250528":  0.154 / USD2RMB, // 720p 5s 示例约 0.77 元
+	// 渠道别名（无官方元数据，仍可按秒计费）
+	"Seedance-2.0":                0.994 / USD2RMB,
+	"seedance-2.0-VIP":            0.994 / USD2RMB,
+	"seedance-2.0-带参考-固定15s": 0.994 / USD2RMB,
+	// Volcengine Seedream — 元/张 ÷ 7.3
+	"doubao-seedream-4-5-251128": 0.25 / USD2RMB,
+	"doubao-seedream-5-0-260128": 0.22 / USD2RMB,
+	"doubao-seedream-5-0-lite":   0.22 / USD2RMB,
+	"doubao-seedream-4-0-250828": 0.20 / USD2RMB,
+	"doubao-seed3d-2.0":          2.40 / USD2RMB,
 }
 
 var defaultAudioRatio = map[string]float64{
@@ -343,6 +372,17 @@ var defaultCompletionRatio = map[string]float64{
 	"gpt-4o-gizmo-*": 3,
 	"gpt-4-all":      2,
 	"gpt-image-1":    8,
+	// Volcengine 文本 — 输出单价 / 输入单价
+	"doubao-seed-2-0-lite-260428":    3.6 / 0.6,
+	"doubao-seed-2-0-mini-260428":   2.0 / 0.2,
+	"doubao-seed-1-8-251215":         2.0 / 0.8,
+	"doubao-seed-1-6-250615":         2.0 / 0.8,
+	"doubao-seed-1-6-flash-250615":   1.5 / 0.15,
+	"doubao-1.5-pro-32k":             2.0 / 0.8,
+	"doubao-1.5-lite-32k":            0.6 / 0.3,
+	"deepseek-v3.2":                  3.0 / 2.0,
+	"deepseek-r1":                    16.0 / 4.0,
+	"glm-4.7":                        8.0 / 2.0,
 }
 
 // InitRatioSettings initializes all model related settings maps
