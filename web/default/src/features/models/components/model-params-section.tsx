@@ -1,7 +1,7 @@
 /*
 Copyright (C) 2023-2026 QuantumNous
 */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -41,16 +41,23 @@ import {
   updateModelUiParamRegistry,
 } from '../model-params-api'
 import {
+  getVideoApiModeLabel,
+  getVideoApiModeOptions,
+} from '../model-params-labels'
+import {
   DEFAULT_IMAGE_PROFILE_ID,
   DEFAULT_VIDEO_PROFILE_ID,
   IMAGE_PARAM_KEYS,
   modelParamsQueryKeys,
-  VIDEO_API_MODES,
   VIDEO_PARAM_KEYS,
   type ModelUiParamCapability,
   type ModelUiParamProfile,
 } from '../model-params-types'
 import type { Model } from '../types'
+
+function FieldHelp({ children }: { children: ReactNode }) {
+  return <p className='text-muted-foreground text-xs'>{children}</p>
+}
 
 function parseJsonObject(raw: string): Record<string, unknown> {
   try {
@@ -213,9 +220,11 @@ function ProfileEditorDialog({
       <div className='max-h-[70vh] space-y-4 overflow-y-auto pr-1'>
         <div className='space-y-2'>
           <Label>{t('Profile id')}</Label>
+          <FieldHelp>{t('Profile id help')}</FieldHelp>
           <Input
             value={form.profile_id}
             disabled={Boolean(editingProfile)}
+            placeholder={t('Profile id placeholder')}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, profile_id: event.target.value }))
             }
@@ -224,8 +233,9 @@ function ProfileEditorDialog({
         {capability === 'video' ? (
           <>
             <div className='grid gap-3 md:grid-cols-2'>
-              <div className='space-y-2'>
+              <div className='space-y-2 md:col-span-2'>
                 <Label>{t('API mode')}</Label>
+                <FieldHelp>{t('API mode help')}</FieldHelp>
                 <Select
                   value={form.api_mode || '__none__'}
                   onValueChange={(value) => {
@@ -241,16 +251,24 @@ function ProfileEditorDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='__none__'>{t('None')}</SelectItem>
-                    {VIDEO_API_MODES.map((mode) => (
-                      <SelectItem key={mode} value={mode}>
-                        {mode}
+                    {getVideoApiModeOptions(t).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {form.api_mode ? (
+                  <FieldHelp>
+                    {getVideoApiModeOptions(t).find(
+                      (option) => option.value === form.api_mode
+                    )?.description}
+                  </FieldHelp>
+                ) : null}
               </div>
               <div className='space-y-2'>
                 <Label>{t('Poll status')}</Label>
+                <FieldHelp>{t('Poll status help')}</FieldHelp>
                 <Select
                   value={form.poll_status || '__none__'}
                   onValueChange={(value) => {
@@ -266,26 +284,30 @@ function ProfileEditorDialog({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='__none__'>{t('None')}</SelectItem>
-                    <SelectItem value='strict'>strict</SelectItem>
-                    <SelectItem value='relaxed'>relaxed</SelectItem>
+                    <SelectItem value='strict'>{t('Poll status: strict')}</SelectItem>
+                    <SelectItem value='relaxed'>{t('Poll status: relaxed')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className='flex items-center gap-2'>
-              <Checkbox
-                checked={form.requires_reference_media}
-                onCheckedChange={(checked) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    requires_reference_media: checked === true,
-                  }))
-                }
-              />
-              <Label>{t('Requires reference media')}</Label>
+            <div className='space-y-1'>
+              <div className='flex items-center gap-2'>
+                <Checkbox
+                  checked={form.requires_reference_media}
+                  onCheckedChange={(checked) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      requires_reference_media: checked === true,
+                    }))
+                  }
+                />
+                <Label>{t('Requires reference media')}</Label>
+              </div>
+              <FieldHelp>{t('Requires reference media help')}</FieldHelp>
             </div>
             <div className='space-y-2'>
               <Label>{t('Reference limits (JSON)')}</Label>
+              <FieldHelp>{t('Reference limits help')}</FieldHelp>
               <Textarea
                 rows={3}
                 className='font-mono text-xs'
@@ -300,6 +322,7 @@ function ProfileEditorDialog({
             </div>
             <div className='space-y-2'>
               <Label>{t('Poll override (JSON)')}</Label>
+              <FieldHelp>{t('Poll override help')}</FieldHelp>
               <Textarea
                 rows={3}
                 className='font-mono text-xs'
@@ -313,6 +336,7 @@ function ProfileEditorDialog({
         ) : null}
         <div className='space-y-2'>
           <Label>{t('Parameter toggles')}</Label>
+          <FieldHelp>{t('Parameter toggles help')}</FieldHelp>
           <div className='grid gap-2 sm:grid-cols-2'>
             {paramKeys.map((key) => (
               <div key={key} className='flex items-center gap-2'>
@@ -336,6 +360,7 @@ function ProfileEditorDialog({
         </div>
         <div className='space-y-2'>
           <Label>{t('Params (JSON)')}</Label>
+          <FieldHelp>{t('Params JSON help')}</FieldHelp>
           <Textarea
             rows={10}
             className='font-mono text-xs'
@@ -349,6 +374,7 @@ function ProfileEditorDialog({
           <>
             <div className='space-y-2'>
               <Label>{t('Option rules (JSON)')}</Label>
+              <FieldHelp>{t('Option rules help')}</FieldHelp>
               <Textarea
                 rows={4}
                 className='font-mono text-xs'
@@ -363,6 +389,7 @@ function ProfileEditorDialog({
             </div>
             <div className='space-y-2'>
               <Label>{t('Hints (JSON)')}</Label>
+              <FieldHelp>{t('Hints help')}</FieldHelp>
               <Textarea
                 rows={4}
                 className='font-mono text-xs'
@@ -375,7 +402,8 @@ function ProfileEditorDialog({
           </>
         ) : null}
         <div className='space-y-2'>
-          <Label>{t('Note')}</Label>
+          <Label>{t('Admin note')}</Label>
+          <FieldHelp>{t('Admin note help')}</FieldHelp>
           <Input
             value={form.note}
             onChange={(event) =>
@@ -385,6 +413,53 @@ function ProfileEditorDialog({
         </div>
       </div>
     </Dialog>
+  )
+}
+
+const PROFILE_DEFAULT_VALUE = '__default__'
+
+function resolveProfileOptionLabel(
+  options: Array<{ value: string; label: string }>,
+  value: string
+) {
+  return (
+    options.find((option) => option.value === value)?.label ??
+    options[0]?.label ??
+    value
+  )
+}
+
+function ProfileBindingSelect({
+  value,
+  options,
+  onValueChange,
+}: {
+  value: string
+  options: Array<{ value: string; label: string }>
+  onValueChange: (value: string) => void
+}) {
+  const selectValue = value || PROFILE_DEFAULT_VALUE
+  const label = resolveProfileOptionLabel(options, selectValue)
+
+  return (
+    <Select
+      value={selectValue}
+      onValueChange={(nextValue) => {
+        if (!nextValue) return
+        onValueChange(nextValue)
+      }}
+    >
+      <SelectTrigger className='h-8 w-full min-w-[180px]'>
+        <SelectValue>{label}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
@@ -451,7 +526,10 @@ function ModelBindingsPanel({
         ? DEFAULT_VIDEO_PROFILE_ID
         : DEFAULT_IMAGE_PROFILE_ID
     return [
-      { value: '', label: t('Default ({{id}})', { id: defaultId }) },
+      {
+        value: PROFILE_DEFAULT_VALUE,
+        label: t('Default ({{id}})', { id: defaultId }),
+      },
       ...profiles.map((profile) => ({
         value: profile.profile_id,
         label: profile.profile_id,
@@ -465,13 +543,14 @@ function ModelBindingsPanel({
         <CardTitle className='text-base'>{t('Model profile bindings')}</CardTitle>
       </CardHeader>
       <CardContent className='space-y-3'>
+        <FieldHelp>{t('Model profile bindings help')}</FieldHelp>
         <Input
           placeholder={t('Search models')}
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
         />
-        <div className='overflow-auto rounded-md border'>
-          <Table>
+        <div className='overflow-x-auto rounded-md border'>
+          <Table className='min-w-[960px]'>
             <TableHeader>
               <TableRow>
                 <TableHead>{t('Model name')}</TableHead>
@@ -498,62 +577,40 @@ function ModelBindingsPanel({
                       {model.model_name}
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={drafts[model.id]?.video || '__default__'}
-                        onValueChange={(value) => {
-                          if (!value) return
+                      <ProfileBindingSelect
+                        value={drafts[model.id]?.video || PROFILE_DEFAULT_VALUE}
+                        options={profileOptions('video')}
+                        onValueChange={(nextValue) => {
                           setDrafts((prev) => ({
                             ...prev,
                             [model.id]: {
-                              video: value === '__default__' ? '' : value,
+                              video:
+                                nextValue === PROFILE_DEFAULT_VALUE
+                                  ? ''
+                                  : nextValue,
                               image: prev[model.id]?.image || '',
                             },
                           }))
                         }}
-                      >
-                        <SelectTrigger className='h-8'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {profileOptions('video').map((option) => (
-                            <SelectItem
-                              key={option.value || '__default__'}
-                              value={option.value || '__default__'}
-                            >
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={drafts[model.id]?.image || '__default__'}
-                        onValueChange={(value) => {
-                          if (!value) return
+                      <ProfileBindingSelect
+                        value={drafts[model.id]?.image || PROFILE_DEFAULT_VALUE}
+                        options={profileOptions('image')}
+                        onValueChange={(nextValue) => {
                           setDrafts((prev) => ({
                             ...prev,
                             [model.id]: {
                               video: prev[model.id]?.video || '',
-                              image: value === '__default__' ? '' : value,
+                              image:
+                                nextValue === PROFILE_DEFAULT_VALUE
+                                  ? ''
+                                  : nextValue,
                             },
                           }))
                         }}
-                      >
-                        <SelectTrigger className='h-8'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {profileOptions('image').map((option) => (
-                            <SelectItem
-                              key={option.value || '__default__'}
-                              value={option.value || '__default__'}
-                            >
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </TableCell>
                     <TableCell className='text-right'>
                       <Button
@@ -671,14 +728,14 @@ export function ModelParamsSection() {
     capability === 'video' ? VIDEO_PARAM_KEYS : IMAGE_PARAM_KEYS
 
   return (
-    <div className='flex h-full min-h-0 flex-col gap-4'>
+    <div className='space-y-4 pb-4'>
       <Tabs defaultValue='profiles'>
         <TabsList>
           <TabsTrigger value='profiles'>{t('Parameter profiles')}</TabsTrigger>
           <TabsTrigger value='bindings'>{t('Model bindings')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value='profiles' className='mt-4 space-y-4'>
+        <TabsContent value='profiles' className='mt-4 flex-none space-y-4'>
           <Tabs
             value={capability}
             onValueChange={(value) =>
@@ -694,10 +751,12 @@ export function ModelParamsSection() {
           <Card>
             <CardHeader className='pb-3'>
               <CardTitle className='text-base'>{t('Registry settings')}</CardTitle>
+              <FieldHelp>{t('Registry settings help')}</FieldHelp>
             </CardHeader>
             <CardContent className='grid gap-3 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label>{t('Default profile id')}</Label>
+                <FieldHelp>{t('Default profile id help')}</FieldHelp>
                 <Input
                   value={registryDraft.default_profile_id}
                   onChange={(event) =>
@@ -711,6 +770,7 @@ export function ModelParamsSection() {
               {capability === 'video' ? (
                 <div className='space-y-2 md:col-span-2'>
                   <Label>{t('Poll defaults (JSON)')}</Label>
+                  <FieldHelp>{t('Poll defaults help')}</FieldHelp>
                   <Textarea
                     rows={4}
                     className='font-mono text-xs'
@@ -737,7 +797,10 @@ export function ModelParamsSection() {
           </Card>
 
           <div className='flex items-center justify-between'>
-            <h3 className='text-sm font-medium'>{t('Profile templates')}</h3>
+            <div>
+              <h3 className='text-sm font-medium'>{t('Profile templates')}</h3>
+              <FieldHelp>{t('Profile templates help')}</FieldHelp>
+            </div>
             <Button
               size='sm'
               onClick={() => {
@@ -750,8 +813,8 @@ export function ModelParamsSection() {
             </Button>
           </div>
 
-          <div className='min-h-0 flex-1 overflow-auto rounded-md border'>
-            <Table>
+          <div className='overflow-x-auto rounded-md border'>
+            <Table className='min-w-[720px]'>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('Profile id')}</TableHead>
@@ -780,7 +843,11 @@ export function ModelParamsSection() {
                         {profile.profile_id}
                       </TableCell>
                       {capability === 'video' ? (
-                        <TableCell>{profile.api_mode || '—'}</TableCell>
+                        <TableCell className='text-xs'>
+                          {profile.api_mode
+                            ? getVideoApiModeLabel(t, profile.api_mode)
+                            : '—'}
+                        </TableCell>
                       ) : null}
                       <TableCell className='text-xs text-muted-foreground'>
                         {paramKeys
@@ -818,7 +885,7 @@ export function ModelParamsSection() {
           </div>
         </TabsContent>
 
-        <TabsContent value='bindings' className='mt-4'>
+        <TabsContent value='bindings' className='mt-4 flex-none'>
           <ModelBindingsPanel
             videoProfiles={videoProfiles}
             imageProfiles={imageProfiles}
