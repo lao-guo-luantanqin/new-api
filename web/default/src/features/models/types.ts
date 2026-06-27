@@ -48,6 +48,7 @@ export interface Model {
   name_rule: number
   video_profile_id?: string
   image_profile_id?: string
+  api_doc?: string
   // Runtime fields
   bound_channels?: BoundChannel[]
   enable_groups?: string[]

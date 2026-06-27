@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMemo, useState } from 'react'
+import { DEFAULT_API_BASE_URL } from '@/features/canvas/lib/canvas-config'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -25,6 +26,7 @@ import { getPerfMetricsSummary } from '@/features/performance-metrics/api'
 import { DEFAULT_PRICING_PAGE_SIZE, DEFAULT_TOKEN_UNIT } from '../constants'
 import type { PricingModel, TokenUnit } from '../types'
 import { ModelCard } from './model-card'
+import { ModelDocDialog } from './model-doc-dialog'
 import type { ModelPerfBadgeData } from './model-perf-badge'
 
 export interface ModelCardGridProps {
@@ -39,6 +41,11 @@ export interface ModelCardGridProps {
 export function ModelCardGrid(props: ModelCardGridProps) {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
+  const [docModel, setDocModel] = useState<PricingModel | null>(null)
+  const siteOrigin =
+    typeof window !== 'undefined'
+      ? window.location.origin || DEFAULT_API_BASE_URL
+      : DEFAULT_API_BASE_URL
   const pageSize = DEFAULT_PRICING_PAGE_SIZE
   const tokenUnit = props.tokenUnit ?? DEFAULT_TOKEN_UNIT
   const totalPages = Math.max(1, Math.ceil(props.models.length / pageSize))
@@ -81,9 +88,19 @@ export function ModelCardGrid(props: ModelCardGridProps) {
             showRechargePrice={props.showRechargePrice}
             perf={perfMap.get(model.model_name || '')}
             onClick={() => props.onModelClick(model.model_name || '')}
+            onViewDoc={() => setDocModel(model)}
           />
         ))}
       </div>
+
+      <ModelDocDialog
+        model={docModel}
+        siteOrigin={siteOrigin}
+        open={Boolean(docModel)}
+        onOpenChange={(open) => {
+          if (!open) setDocModel(null)
+        }}
+      />
 
       {totalPages > 1 && (
         <div className='text-muted-foreground flex flex-col items-center justify-between gap-3 border-t px-4 py-3 text-sm sm:flex-row'>
