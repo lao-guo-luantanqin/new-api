@@ -1333,6 +1333,7 @@
     "apiDocs.nav.veoClean": "Veo-Clean",
     "apiDocs.nav.seedanceVideo": "Seedance 2.0",
     "apiDocs.nav.grokImageVideo": "Grok Image & Video",
+    "apiDocs.nav.grokVideoGenerations": "Grok Video (Async)",
     "apiDocs.nav.grokCliVideo": "Grok CLI Video",
     "apiDocs.nav.gptImage": "GPT-Image-2",
     "apiDocs.nav.geminiImage": "Gemini Image",

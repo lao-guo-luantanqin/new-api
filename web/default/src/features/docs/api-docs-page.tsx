@@ -9,6 +9,7 @@ License, or (at your option) any later version.
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSystemConfig } from '@/hooks/use-system-config'
+import { DEFAULT_API_BASE_URL } from '@/features/canvas/lib/canvas-config'
 import { apiDocsNavGroups } from './api-docs-nav'
 import { ApiDocsSections } from './api-docs-sections'
 import { DocsNavLink, DocsShell } from './docs-shell'
@@ -18,8 +19,8 @@ export function ApiDocsPage() {
   const { systemName } = useSystemConfig()
 
   const siteOrigin = useMemo(() => {
-    if (typeof window === 'undefined') return ''
-    return window.location.origin
+    if (typeof window === 'undefined') return DEFAULT_API_BASE_URL
+    return window.location.origin || DEFAULT_API_BASE_URL
   }, [])
 
   const displayName = systemName?.trim() || '沧元算力'

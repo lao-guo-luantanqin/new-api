@@ -8,6 +8,7 @@ License, or (at your option) any later version.
 */
 import { createApiDocsContext } from './context'
 import { GrokCliVideoSection, GrokImageVideoSection } from './grok-sections'
+import { GrokVideoGenerationsSection } from './grok-video-generations-section'
 import { GeminiImageSection, GeminiMusicSection, GptImageSection } from './image-sections'
 import { UnifiedImageApiSection } from './image-api-section'
 import { OmniVideoSection, OverviewFaqSection, VeoCleanSection } from './omni-and-overview'
@@ -29,6 +30,7 @@ export function ApiDocsSections(props: ApiDocsSectionsProps) {
       <VeoCleanSection {...ctx} />
       <SeedanceVideoSection {...ctx} />
       <GrokImageVideoSection {...ctx} />
+      <GrokVideoGenerationsSection {...ctx} />
       <GrokCliVideoSection {...ctx} />
       <UnifiedImageApiSection {...ctx} />
       <GptImageSection {...ctx} />

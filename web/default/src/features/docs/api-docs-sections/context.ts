@@ -6,15 +6,18 @@ it under the terms of the GNU Affero General Public License as
 published by the Free Software Foundation, either version 3 of the
 License, or (at your option) any later version.
 */
+import { DEFAULT_API_BASE_URL } from '@/features/canvas/lib/canvas-config'
+
 export type ApiDocsContext = {
   siteOrigin: string
   base: string
 }
 
 export function createApiDocsContext(siteOrigin: string): ApiDocsContext {
+  const origin = siteOrigin.trim() || DEFAULT_API_BASE_URL
   return {
-    siteOrigin: siteOrigin || 'https://YOUR_BASE',
-    base: siteOrigin ? `${siteOrigin}/v1` : 'https://YOUR_BASE/v1',
+    siteOrigin: origin,
+    base: `${origin}/v1`,
   }
 }
 

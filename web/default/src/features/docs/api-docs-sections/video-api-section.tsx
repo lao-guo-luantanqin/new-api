@@ -66,6 +66,11 @@ export function UnifiedVideoApiSection(props: ApiDocsContext) {
       <h3 className='mt-8 text-lg font-semibold'>POST /v1/chat/completions（Grok 视频）</h3>
       <p className='text-muted-foreground mb-4 text-sm'>
         <code>grok-imagine-video</code> 走 Chat 接口而非 /videos；也支持 /videos 异步，但 Chat 流式体验更好。
+        <code>grok-video</code> / <code>grok-video-1.5</code> 走{' '}
+        <a href='#api-grok-video-generations' className='text-primary font-medium hover:underline'>
+          Grok 视频（异步）
+        </a>
+        专线，见该节完整说明。
       </p>
       <DocsTable
         headers={['参数', '类型', '必填', '说明']}

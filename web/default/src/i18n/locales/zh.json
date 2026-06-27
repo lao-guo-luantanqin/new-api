@@ -1334,6 +1334,7 @@
     "apiDocs.nav.veoClean": "Veo-Clean 去水印",
     "apiDocs.nav.seedanceVideo": "Seedance 2.0",
     "apiDocs.nav.grokImageVideo": "Grok 图像 & 视频",
+    "apiDocs.nav.grokVideoGenerations": "Grok 视频（异步）",
     "apiDocs.nav.grokCliVideo": "Grok CLI 视频专线",
     "apiDocs.nav.gptImage": "GPT-Image-2",
     "apiDocs.nav.geminiImage": "Gemini 图像生成",

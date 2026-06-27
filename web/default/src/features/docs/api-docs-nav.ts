@@ -21,6 +21,7 @@ export const apiDocsNavGroups: ApiDocsNavGroup[] = [
       { id: 'api-veo-clean', titleKey: 'apiDocs.nav.veoClean' },
       { id: 'api-seedance-video', titleKey: 'apiDocs.nav.seedanceVideo' },
       { id: 'api-grok-image-video', titleKey: 'apiDocs.nav.grokImageVideo' },
+      { id: 'api-grok-video-generations', titleKey: 'apiDocs.nav.grokVideoGenerations' },
       { id: 'api-grok-cli-video', titleKey: 'apiDocs.nav.grokCliVideo' },
       { id: 'api-video-guide', titleKey: 'apiDocs.nav.videoGuide' },
     ],

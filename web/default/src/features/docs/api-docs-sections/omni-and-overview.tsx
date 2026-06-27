@@ -115,7 +115,7 @@ export function OverviewFaqSection(props: ApiDocsContext) {
         headers={['项', '说明']}
         rows={[
           ['Base URL', base],
-          ['备用写法', siteOrigin || 'https://YOUR_BASE（部分客户端填根域名）'],
+          ['备用写法', `${siteOrigin}（部分客户端填根域名，不带 /v1）`],
           ['鉴权', 'Authorization: Bearer sk-你的令牌'],
           ['模型名', '与模型广场展示名一致，如 omni-fast、Seedance2.0-720p、grok-imagine-video'],
           ['视频 API', '见 #api-video-api 统一参数与模型能力对照表'],
