@@ -64,6 +64,11 @@ export type PricingModel = {
   model_aliases?: string[]
   /** 展示名相同但定价不同的各渠道注册名（详情页展示） */
   pricing_variants?: PricingModel[]
+  /** 后台下发的视频/图像 UI 参数（与 model_ui_params 配置一致） */
+  video_ui_params?: Record<string, unknown>
+  image_ui_params?: Record<string, unknown>
+  /** 后台 models.api_doc JSON，驱动模型文档弹窗 */
+  api_doc?: Record<string, unknown>
   /**
    * Optional model metadata fields. These are not yet returned by the backend
    * and are populated client-side from {@link inferModelMetadata}.

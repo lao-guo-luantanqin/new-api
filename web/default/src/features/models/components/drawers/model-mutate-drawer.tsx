@@ -94,6 +94,7 @@ const extendedModelFormSchema = z.object({
   tags: z.array(z.string()),
   vendor_id: z.number().optional(),
   endpoints: z.string(),
+  api_doc: z.string(),
   name_rule: z.number(),
   status: z.boolean(),
   sync_official: z.boolean(),
@@ -218,6 +219,7 @@ export function ModelMutateDrawer({
       tags: [],
       vendor_id: undefined,
       endpoints: '',
+      api_doc: '',
       name_rule: 0,
       status: true,
       sync_official: true,
@@ -277,6 +279,7 @@ export function ModelMutateDrawer({
         tags: parseModelTags(model.tags),
         vendor_id: model.vendor_id,
         endpoints: model.endpoints || '',
+        api_doc: model.api_doc || '',
         name_rule: model.name_rule || 0,
         status: model.status === 1,
         sync_official: model.sync_official === 1,
@@ -408,6 +411,7 @@ export function ModelMutateDrawer({
         tags: [],
         vendor_id: undefined,
         endpoints: '',
+        api_doc: '',
         name_rule: 0,
         status: true,
         sync_official: true,
@@ -955,6 +959,32 @@ export function ModelMutateDrawer({
                     </FormControl>
                     <FormDescription>
                       {t('Define API endpoints for this model (JSON format)')}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </SideDrawerSection>
+
+            <SideDrawerSection>
+              <h3 className='text-sm font-semibold'>{t('API documentation')}</h3>
+              <FormField
+                control={form.control}
+                name='api_doc'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('modelDoc.apiDocJsonLabel')}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        rows={14}
+                        className='font-mono text-xs'
+                        placeholder={t('modelDoc.apiDocJsonPlaceholder')}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t('modelDoc.apiDocJsonHint')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

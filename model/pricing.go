@@ -39,6 +39,7 @@ type Pricing struct {
 	PricingVersion         string                  `json:"pricing_version,omitempty"`
 	VideoUiParams          map[string]interface{}  `json:"video_ui_params,omitempty"`
 	ImageUiParams          map[string]interface{}  `json:"image_ui_params,omitempty"`
+	ApiDoc                 map[string]interface{}  `json:"api_doc,omitempty"`
 }
 
 type PricingVendor struct {
@@ -311,6 +312,9 @@ func updatePricing() {
 				pricing.VideoUiParams = ResolveVideoUiParams(meta, uiParamCtx)
 				pricing.ImageUiParams = ResolveImageUiParams(meta, uiParamCtx)
 			}
+			if doc := ParseApiDocJSON(meta.ApiDoc); doc != nil {
+				pricing.ApiDoc = doc
+			}
 		} else if uiParamCtx != nil {
 			pricing.VideoUiParams = ResolveVideoUiParams(nil, uiParamCtx)
 			pricing.ImageUiParams = ResolveImageUiParams(nil, uiParamCtx)
@@ -363,7 +367,7 @@ func updatePricing() {
 
 	// 防止大更新后数据不通用
 	if len(pricingMap) > 0 {
-		pricingMap[0].PricingVersion = "model-ui-params-v2-per-model-binding"
+		pricingMap[0].PricingVersion = "model-api-doc-v1"
 	}
 
 	// 刷新缓存映射，供高并发快速查询
