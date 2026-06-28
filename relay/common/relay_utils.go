@@ -55,10 +55,36 @@ func createTaskError(err error, code string, statusCode int, localError bool) *d
 	}
 }
 
+const promptInputContextKey = "prompt_input"
+
 func storeTaskRequest(c *gin.Context, info *RelayInfo, action string, requestObj TaskSubmitReq) {
 	info.Action = action
 	c.Set("task_request", requestObj)
+	StorePromptInput(c, requestObj.GetPrompt())
 }
+
+// StorePromptInput keeps the submitted prompt on the request context for task
+// persistence and moderation audit logs.
+func StorePromptInput(c *gin.Context, prompt string) {
+	prompt = strings.TrimSpace(prompt)
+	if prompt != "" {
+		c.Set(promptInputContextKey, prompt)
+	}
+}
+
+// PromptInputFromContext returns the prompt captured for the current relay request.
+func PromptInputFromContext(c *gin.Context) string {
+	if v, ok := c.Get(promptInputContextKey); ok {
+		if prompt, ok := v.(string); ok {
+			return strings.TrimSpace(prompt)
+		}
+	}
+	if req, err := GetTaskRequest(c); err == nil {
+		return strings.TrimSpace(req.GetPrompt())
+	}
+	return ""
+}
+
 func GetTaskRequest(c *gin.Context) (TaskSubmitReq, error) {
 	v, exists := c.Get("task_request")
 	if !exists {

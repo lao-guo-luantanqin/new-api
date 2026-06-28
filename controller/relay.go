@@ -89,7 +89,8 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 	defer func() {
 		if newAPIError != nil {
 			logger.LogError(c, fmt.Sprintf("relay error: %s", common.LocalLogPreview(newAPIError.Error())))
-			newAPIError.SetMessage(common.MessageWithRequestId(newAPIError.Error(), requestId))
+			clientMsg := service.NormalizeClientErrorMessage(c, newAPIError.Error())
+			newAPIError.SetMessage(common.MessageWithRequestId(clientMsg, requestId))
 			switch relayFormat {
 			case types.RelayFormatOpenAIRealtime:
 				helper.WssError(c, ws, newAPIError.ToOpenAIError())
@@ -132,12 +133,19 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 	} else {
 		meta = fastTokenCountMetaForPricing(request)
 	}
+	if meta != nil {
+		relaycommon.StorePromptInput(c, meta.CombineText)
+	}
 
 	if needSensitiveCheck && meta != nil {
 		contains, words := service.CheckSensitiveText(meta.CombineText)
 		if contains {
 			logger.LogWarn(c, fmt.Sprintf("user sensitive words detected: %s", strings.Join(words, ", ")))
-			newAPIError = types.NewError(err, types.ErrorCodeSensitiveWordsDetected)
+			newAPIError = types.NewErrorWithStatusCode(
+				fmt.Errorf("%s", service.ContentPolicyMessage(c)),
+				types.ErrorCodeSensitiveWordsDetected,
+				http.StatusBadRequest,
+			)
 			return
 		}
 	}
@@ -394,6 +402,9 @@ func processChannelError(c *gin.Context, channelError types.ChannelError, err *t
 		}
 		service.AppendChannelAffinityAdminInfo(c, adminInfo)
 		other["admin_info"] = adminInfo
+		if promptInput := relaycommon.PromptInputFromContext(c); promptInput != "" {
+			other["prompt_input"] = promptInput
+		}
 		startTime := common.GetContextKeyTime(c, constant.ContextKeyRequestStartTime)
 		if startTime.IsZero() {
 			startTime = time.Now()
@@ -596,6 +607,7 @@ func RelayTask(c *gin.Context) {
 		task.Quota = result.Quota
 		task.Data = result.TaskData
 		task.Action = relayInfo.Action
+		task.Properties.Input = relaycommon.PromptInputFromContext(c)
 		if insertErr := task.Insert(); insertErr != nil {
 			common.SysError("insert task error: " + insertErr.Error())
 		}
@@ -611,6 +623,7 @@ func respondTaskError(c *gin.Context, taskErr *dto.TaskError) {
 	if taskErr.StatusCode == http.StatusTooManyRequests {
 		taskErr.Message = "当前分组上游负载已饱和，请稍后再试"
 	}
+	service.NormalizeTaskErrorMessage(c, taskErr)
 	c.JSON(taskErr.StatusCode, taskErr)
 }
 
