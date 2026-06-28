@@ -2105,6 +2105,62 @@
             ]
         },
         {
+            "id": "video-tpl-async-ratio-duration-ref1-veo",
+            "apiMode": "videos-json-async",
+            "match": [
+                "veo_3_1"
+            ],
+            "referenceLimits": {
+                "images": 5,
+                "videos": 0,
+                "audios": 0
+            },
+            "params": {
+                "resolution": {
+                    "enabled": false
+                },
+                "ratio": {
+                    "enabled": true,
+                    "options": [
+                        {
+                            "value": "16:9",
+                            "label": "横屏"
+                        },
+                        {
+                            "value": "9:16",
+                            "label": "竖屏"
+                        }
+                    ]
+                },
+                "duration": {
+                    "enabled": true,
+                    "min": 1,
+                    "max": 30,
+                    "hint": "单位为秒；文档常见值为 8、10，具体以当前模型/账户为准。"
+                },
+                "generateAudio": {
+                    "enabled": false
+                },
+                "watermark": {
+                    "enabled": false
+                },
+                "seed": {
+                    "enabled": false
+                },
+                "widthHeight": {
+                    "enabled": false
+                },
+                "frameInputs": {
+                    "enabled": false
+                }
+            },
+            "hints": [
+                {
+                    "text": "Geeknow Veo 3.1：文生视频或参考图；画幅 1280×720 / 720×1280；duration 为整数秒（文档示例 8/10）；input_reference 可传 URL/base64，多张时效果取决于模型。"
+                }
+            ]
+        },
+        {
             "id": "video-tpl-async-ratio-ref1",
             "apiMode": "videos-json-async",
             "match": [
