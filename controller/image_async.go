@@ -138,8 +138,9 @@ func RelayImageTaskSubmit(c *gin.Context) {
 		task.Quota = relayInfo.PriceData.Quota
 		task.Properties.TaskKind = constant.TaskKindImage
 		if meta := request.GetTokenCountMeta(); meta != nil {
-			task.Properties.Input = strings.TrimSpace(meta.CombineText)
+			relaycommon.StorePromptInput(c, meta.CombineText)
 		}
+		task.Properties.Input = relaycommon.PromptInputFromContext(c)
 		task.PrivateData.RequestPath = requestPath
 		task.PrivateData.RequestSnapshot = snapshot
 		task.PrivateData.BillingSource = relayInfo.BillingSource

@@ -56,6 +56,7 @@ func imageFetchByIDRespBodyBuilder(c *gin.Context) (respBody []byte, taskResp *d
 	}
 	object := imageJobObjectForPath(c.Request.URL.Path)
 	job := originTask.ToOpenAIImageJob(object)
+	service.NormalizeOpenAIImageJobError(c, job)
 	respBody, err = common.Marshal(job)
 	if err != nil {
 		taskResp = service.TaskErrorWrapper(err, "marshal_response_failed", http.StatusInternalServerError)
