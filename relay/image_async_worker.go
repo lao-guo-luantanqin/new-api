@@ -119,7 +119,7 @@ func processImageAsyncTask(taskID string) {
 	service.RecalculateTaskQuota(ctx, task, task.Quota, "image async complete")
 }
 
-// resolveTaskImageResultURLs：b64_json / data URI 上传 R2；4K 模型上游 url 直接透传，其它模型仍要求 b64_json。
+// resolveTaskImageResultURLs：b64_json / data URI / 4K 上游 url 均转存 R2 后返回公网 URL；其它模型仍要求 b64_json。
 func resolveTaskImageResultURLs(ctx context.Context, task *model.Task, images []dto.ImageData) ([]string, error) {
 	useURLResponse := imageAsyncUsesURLResponse(task.Properties.OriginModelName)
 	resultURLs := make([]string, 0, len(images))
@@ -142,7 +142,12 @@ func resolveTaskImageResultURLs(ctx context.Context, task *model.Task, images []
 		}
 		if mimeOrURL != "" {
 			if useURLResponse {
-				resultURLs = append(resultURLs, rewriteLoopbackUpstreamImageURL(taskUpstreamBaseURL(task), mimeOrURL))
+				downloadURL := service.RewriteLoopbackUpstreamImageURL(taskUpstreamBaseURL(task), mimeOrURL)
+				uploaded, err := service.UploadGeneratedImageFromURL(ctx, task.UserId, task.TaskID, index, downloadURL)
+				if err != nil {
+					return nil, fmt.Errorf("rehost upstream image url: %w", err)
+				}
+				resultURLs = append(resultURLs, uploaded.PublicURL)
 				continue
 			}
 			return nil, fmt.Errorf("upstream returned url without b64_json; use response_format=b64_json")
