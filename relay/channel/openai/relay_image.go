@@ -40,6 +40,12 @@ func OpenaiImageHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *http.
 		return nil, types.WithOpenAIError(*oaiError, resp.StatusCode)
 	}
 
+	rehostedBody, err := service.RehostSyncImageResponseBody(c.Request.Context(), c.GetInt("id"), info.OriginModelName, info.ChannelBaseUrl, responseBody)
+	if err != nil {
+		return nil, types.NewOpenAIError(err, types.ErrorCodeBadResponse, http.StatusBadGateway)
+	}
+	responseBody = rehostedBody
+
 	// 写入新的 response body
 	service.IOCopyBytesGracefully(c, resp, responseBody)
 
@@ -222,6 +228,12 @@ func OpenaiImageJSONAsStreamHandler(c *gin.Context, info *relaycommon.RelayInfo,
 	}
 	normalizeOpenAIUsage(&usageResp.Usage)
 	applyUsagePostProcessing(info, &usageResp.Usage, responseBody)
+
+	rehostedData, err := service.RehostImageDataURLs(c.Request.Context(), c.GetInt("id"), "", info.ChannelBaseUrl, info.OriginModelName, imageResp.Data)
+	if err != nil {
+		return nil, types.NewOpenAIError(err, types.ErrorCodeBadResponse, http.StatusBadGateway)
+	}
+	imageResp.Data = rehostedData
 
 	helper.SetEventStreamHeaders(c)
 	c.Status(http.StatusOK)

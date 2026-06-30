@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
@@ -20,6 +18,7 @@ import (
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	relayconstant "github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/relay/helper"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 	"github.com/QuantumNous/new-api/types"
 	"github.com/gin-gonic/gin"
@@ -172,8 +171,7 @@ func buildHTTPRequestForImageTask(task *model.Task) (*http.Request, int, error) 
 
 // imageAsyncUsesURLResponse：仅 4K 档位（别名后缀 -4k）走 url 响应，避免超大 b64_json 被上游截断。
 func imageAsyncUsesURLResponse(originModel string) bool {
-	name := strings.ToLower(strings.TrimSpace(originModel))
-	return strings.HasSuffix(name, "-4k")
+	return service.ImageModelUsesURLRehost(originModel)
 }
 
 func normalizeAsyncGenerationBody(body []byte, useURLResponse bool) ([]byte, error) {
@@ -443,46 +441,11 @@ func ImageJobObjectForPathExported(path string) string {
 	return imageJobObjectForPath(path)
 }
 
+// buildImageProxyURL 构建异步任务图片代理地址。
 func buildImageProxyURL(taskID string) string {
 	base := strings.TrimRight(system_setting.ServerAddress, "/")
 	if base == "" {
 		return fmt.Sprintf("/v1/images/%s/content", taskID)
 	}
 	return fmt.Sprintf("%s/v1/images/%s/content", base, taskID)
-}
-
-// rewriteLoopbackUpstreamImageURL 将上游 loopback 图片地址（如 Gulie 127.0.0.1:3001）
-// 映射为渠道主机名 + 原端口，便于下游直接访问。
-func rewriteLoopbackUpstreamImageURL(channelBaseURL, imageURL string) string {
-	channelBaseURL = strings.TrimSpace(channelBaseURL)
-	if channelBaseURL == "" {
-		return imageURL
-	}
-	img, err := url.Parse(imageURL)
-	if err != nil {
-		return imageURL
-	}
-	host := strings.ToLower(img.Hostname())
-	if host != "127.0.0.1" && host != "localhost" {
-		return imageURL
-	}
-	base, err := url.Parse(channelBaseURL)
-	if err != nil || base.Hostname() == "" {
-		return imageURL
-	}
-	port := img.Port()
-	if port == "" {
-		if img.Scheme == "https" {
-			port = "443"
-		} else {
-			port = "80"
-		}
-	}
-	out := &url.URL{
-		Scheme:   base.Scheme,
-		Host:     net.JoinHostPort(base.Hostname(), port),
-		Path:     img.Path,
-		RawQuery: img.RawQuery,
-	}
-	return out.String()
 }

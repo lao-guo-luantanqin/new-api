@@ -34,16 +34,9 @@ func getR2Config() *R2Config {
 	accountID := strings.TrimSpace(os.Getenv("R2_ACCOUNT_ID"))
 	accessKeyID := strings.TrimSpace(os.Getenv("R2_ACCESS_KEY_ID"))
 	secretAccessKey := strings.TrimSpace(os.Getenv("R2_SECRET_ACCESS_KEY"))
-	// 生图结果走客户临时桶（uers-assets / tmp 域名），勿回落到 pro / assets 运营桶。
-	bucket := strings.TrimSpace(os.Getenv("R2_GEN_IMAGES_BUCKET"))
-	if bucket == "" {
-		bucket = strings.TrimSpace(os.Getenv("R2_USER_BUCKET"))
-	}
-	publicBase := strings.TrimSpace(os.Getenv("R2_GEN_IMAGES_PUBLIC_BASE_URL"))
-	if publicBase == "" {
-		publicBase = strings.TrimSpace(os.Getenv("R2_USER_PUBLIC_BASE_URL"))
-	}
-	publicBase = strings.TrimRight(publicBase, "/")
+	// 生图结果与临时参考素材共用 R2_USER_BUCKET（uers-assets / tmp 域名），勿用 pro 运营桶。
+	bucket := strings.TrimSpace(os.Getenv("R2_USER_BUCKET"))
+	publicBase := strings.TrimRight(strings.TrimSpace(os.Getenv("R2_USER_PUBLIC_BASE_URL")), "/")
 	if accountID == "" || accessKeyID == "" || secretAccessKey == "" || bucket == "" || publicBase == "" {
 		return nil
 	}
