@@ -16,7 +16,7 @@ ENDPOINTS = [
 ]
 
 PARAMS = [
-    {"name": "model", "description": "必填，固定传当前模型注册名。"},
+    {"name": "model", "description": "必填，固定传 {{model}}（与模型广场展示名一致）。"},
     {"name": "prompt", "description": "必填。视频描述，≤5000 字符。多素材时用 @image1…@image9 / @video1…@video3 / @audio1…@audio3 引用。"},
     {"name": "aspect_ratio", "description": "画幅，默认 16:9。支持 16:9、9:16、1:1、21:9、3:4、4:3。"},
     {"name": "duration", "description": "时长秒数，4–15 任意整数。"},
@@ -81,7 +81,7 @@ def model_intro(reg_name: str) -> str:
     tier, rmb = MODEL_META[reg_name]
     return (
         f"Seedance 2.0 视频生成 · {tier}\n"
-        f"模型：{reg_name}\n"
+        f"模型：{{{{model}}}}\n"
         f"计费：按秒 ¥{rmb:.2f}/s × duration，失败不计费\n\n"
         "调用流程\n"
         "1. POST /v1/videos 提交任务\n"
@@ -115,12 +115,13 @@ def model_intro(reg_name: str) -> str:
     )
 
 
-def build_examples(reg_name: str) -> list[dict]:
+def build_examples() -> list[dict]:
+    model = "{{model}}"
     return [
         {
             "title": "文生视频",
             "request_json": {
-                "model": reg_name,
+                "model": model,
                 "prompt": "雨夜霓虹街道，镜头缓慢推进，电影感光影",
                 "aspect_ratio": "16:9",
                 "duration": 8,
@@ -129,7 +130,7 @@ def build_examples(reg_name: str) -> list[dict]:
         {
             "title": "图生视频（公网 URL）",
             "request_json": {
-                "model": reg_name,
+                "model": model,
                 "prompt": "保持人物一致，缓慢走动",
                 "image_url": "https://cdn.example.com/photo.jpg",
                 "aspect_ratio": "16:9",
@@ -139,7 +140,7 @@ def build_examples(reg_name: str) -> list[dict]:
         {
             "title": "图生视频（Base64 免图床）",
             "request_json": {
-                "model": reg_name,
+                "model": model,
                 "prompt": "让画面动起来",
                 "duration": 5,
                 "image_url": "data:image/png;base64,iVBORw0KGgo...",
@@ -148,7 +149,7 @@ def build_examples(reg_name: str) -> list[dict]:
         {
             "title": "多参考图（@image1 / @image2）",
             "request_json": {
-                "model": reg_name,
+                "model": model,
                 "prompt": "@image1 的人物在 @image2 的场景中行走",
                 "image_url": "https://cdn.example.com/person.jpg",
                 "reference_image_urls": ["https://cdn.example.com/scene.jpg"],
@@ -158,7 +159,7 @@ def build_examples(reg_name: str) -> list[dict]:
         {
             "title": "多角色绑定（reference_images 对象数组）",
             "request_json": {
-                "model": reg_name,
+                "model": model,
                 "prompt": "@志强 与 @清雅 在医院走廊相遇，@张秋月 从远处走来",
                 "reference_images": [
                     {"url": "https://cdn.example.com/zhiqiang.jpg", "name": "志强"},
@@ -172,7 +173,7 @@ def build_examples(reg_name: str) -> list[dict]:
         {
             "title": "参考视频（@video1）",
             "request_json": {
-                "model": reg_name,
+                "model": model,
                 "prompt": "把 @image1 的人物换进 @video1 的画面",
                 "image_url": "https://cdn.example.com/person.jpg",
                 "reference_videos": ["https://cdn.example.com/ref.mp4"],
@@ -182,7 +183,7 @@ def build_examples(reg_name: str) -> list[dict]:
         {
             "title": "全能参考（图 + 视频 + 音频）",
             "request_json": {
-                "model": reg_name,
+                "model": model,
                 "prompt": "以 @image1 的人物、@video1 的运镜，配合 @audio1 的节奏生成广告",
                 "image_url": "https://cdn.example.com/main.jpg",
                 "reference_image_urls": ["https://cdn.example.com/ref.jpg"],
@@ -195,7 +196,7 @@ def build_examples(reg_name: str) -> list[dict]:
         {
             "title": "首尾帧过渡",
             "request_json": {
-                "model": reg_name,
+                "model": model,
                 "prompt": "平滑电影感过渡",
                 "first_image_url": "https://cdn.example.com/start.jpg",
                 "last_image_url": "https://cdn.example.com/end.jpg",
@@ -223,7 +224,7 @@ def merge_model_price(updates: dict[str, float], remove_keys: list[str]) -> None
 
 
 def build_api_doc(reg_name: str) -> dict:
-    examples = build_examples(reg_name)
+    examples = build_examples()
     return {
         "dispatch_mode": "async",
         "intro": model_intro(reg_name),
