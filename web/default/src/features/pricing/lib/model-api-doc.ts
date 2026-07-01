@@ -7,7 +7,10 @@ published by the Free Software Foundation, either version 3 of the
 License, or (at your option) any later version.
 */
 import { DEFAULT_API_BASE_URL } from '@/features/canvas/lib/canvas-config'
-import { getModelDisplayName } from './model-display-name'
+import {
+  getModelDisplayName,
+  stripModelVendorPrefix,
+} from './model-display-name'
 import type { PricingModel } from '../types'
 
 type UiParamFieldConfig = {
@@ -196,14 +199,37 @@ function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2)
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** api_doc 常存渠道注册名；pricing 对外已是 public 名，渲染时统一替换。 */
+function rewriteChannelPrefixedModelNames(
+  text: string,
+  publicModelName: string
+): string {
+  if (!text.trim() || !publicModelName.trim()) return text
+  const pattern = new RegExp(
+    `[a-z0-9][a-z0-9-]*-${escapeRegExp(publicModelName)}`,
+    'gi'
+  )
+  return text.replace(pattern, (match) => {
+    const stripped = stripModelVendorPrefix(match)
+    return stripped.toLowerCase() === publicModelName.toLowerCase()
+      ? publicModelName
+      : match
+  })
+}
+
 function replacePlaceholders(
   value: string,
   modelName: string,
   base: string
 ): string {
-  return value
-    .replaceAll('{{model}}', modelName)
-    .replaceAll('{{base}}', base)
+  return rewriteChannelPrefixedModelNames(
+    value.replaceAll('{{model}}', modelName).replaceAll('{{base}}', base),
+    modelName
+  )
 }
 
 function applyPlaceholdersToJson(
@@ -379,12 +405,14 @@ function normalizeSingleVariant(
 
   return {
     mode,
-    intro:
+    intro: rewriteChannelPrefixedModelNames(
       slice.intro?.trim() ||
-      model.description?.trim() ||
-      (mode === 'async'
-        ? '提交异步任务后轮询获取结果。'
-        : '单次请求直接返回结果。'),
+        model.description?.trim() ||
+        (mode === 'async'
+          ? '提交异步任务后轮询获取结果。'
+          : '单次请求直接返回结果。'),
+      modelName
+    ),
     endpoints: endpoints.length > 0 ? endpoints : defaultEndpoints,
     requestJson,
     basicRequestJson,

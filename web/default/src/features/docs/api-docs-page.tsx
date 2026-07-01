@@ -95,7 +95,7 @@ export function ApiDocsPage() {
   -H "Authorization: Bearer sk-xxx" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "oairegbox-seedance-pro-720p",
+    "model": "seedance-2.0-720p",
     "prompt": "雨夜霓虹街道，镜头缓慢推进，电影感光影",
     "aspect_ratio": "16:9",
     "duration": 8
