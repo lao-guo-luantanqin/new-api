@@ -601,6 +601,9 @@
                 },
                 {
                     "text": "请使用 1:1、16:9 等比例；quality 选 1K 或自动即可。"
+                },
+                {
+                    "text": "亦支持 Gemini 原生 POST /v1beta/models/{model}:generateContent（Authorization 或 x-goog-api-key）。"
                 }
             ]
         },

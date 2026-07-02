@@ -727,8 +727,8 @@ func TestShouldRefundTaskOnFailure(t *testing.T) {
 
 	assert.False(t, ShouldRefundTaskOnFailure("Generated video rejected by content moderation.", moderationBody))
 	assert.False(t, ShouldRefundTaskOnFailure("", moderationBody))
-	assert.True(t, ShouldRefundTaskOnFailure("The generated images appear to be unsafe. Try modifying the prompts or the seeds.", unsafeImageBody))
-	assert.True(t, ShouldRefundTaskOnFailure("", unsafeImageBody))
+	assert.False(t, ShouldRefundTaskOnFailure("The generated images appear to be unsafe. Try modifying the prompts or the seeds.", unsafeImageBody))
+	assert.False(t, ShouldRefundTaskOnFailure("", unsafeImageBody))
 	assert.False(t, ShouldRefundTaskOnFailure("非常抱歉，该提示可能违反了我们的内容政策。如果你认为此判断有误，请重试或修改提示语。", nil))
 	assert.False(t, ShouldRefundTaskOnFailure("非常抱歉，生成的图片可能违反了关于与第三方内容相似性的防护限制。如果你认为此判断有误，请重试或修改提示语。", nil))
 	assert.True(t, ShouldRefundTaskOnFailure("invalid character 'e' looking for beginning of value", nil))
@@ -744,7 +744,7 @@ func TestShouldRefundRelayError_UnsafeImage(t *testing.T) {
 		Code:    "content_policy_violation",
 	}, http.StatusBadRequest, types.ErrOptionWithSkipRetry())
 
-	assert.True(t, ShouldRefundRelayError(apiErr))
+	assert.False(t, ShouldRefundRelayError(apiErr))
 }
 
 func TestShouldRefundRelayError_UpstreamTimeout(t *testing.T) {
@@ -765,12 +765,10 @@ func TestRefundTaskQuota_UnsafeImageFailure(t *testing.T) {
 
 	RefundTaskQuota(ctx, task, "The generated images appear to be unsafe. Try modifying the prompts or the seeds.")
 
-	assert.Equal(t, initQuota+5555, getUserQuota(t, 18))
-	assert.Equal(t, initToken+5555, getTokenRemainQuota(t, 63))
+	assert.Equal(t, initQuota, getUserQuota(t, 18))
+	assert.Equal(t, initToken, getTokenRemainQuota(t, 63))
 	log := getLastLog(t)
-	require.NotNil(t, log)
-	assert.Equal(t, model.LogTypeRefund, log.Type)
-	assert.Equal(t, 5555, log.Quota)
+	assert.Nil(t, log)
 }
 
 func TestTaskBillingOther_ImageAsyncModelMapping(t *testing.T) {

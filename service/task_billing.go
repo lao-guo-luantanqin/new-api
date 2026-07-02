@@ -181,14 +181,14 @@ func taskModelName(task *model.Task) string {
 	return task.Properties.OriginModelName
 }
 
-// upstreamRefundableTaskFailureMarkers Geek2 等上游确认不扣费的失败（生成前/生成后审查拦截）。
+// upstreamRefundableTaskFailureMarkers Geek2 等上游确认不扣费的失败（非内容审查类误解析等）。
 var upstreamRefundableTaskFailureMarkers = []string{
 	"unexpected end of json input",
-	"appear to be unsafe",
 }
 
 // nonRefundableTaskFailureMarkers 上游内容审核/策略类失败：上游已扣费且不退款，我们也不应退还预扣额度。
 var nonRefundableTaskFailureMarkers = []string{
+	"appear to be unsafe",
 	"content moderation",
 	"content policy",
 	"content violates",
@@ -248,7 +248,7 @@ func IsNonRefundableTaskFailure(reason string) bool {
 	return IsUpstreamChargedContentPolicyFailure(reason)
 }
 
-// IsUpstreamChargedContentPolicyFailure 命中内容审查且上游已计费（排除 unsafe/JSON 误解析可退款场景）。
+// IsUpstreamChargedContentPolicyFailure 命中内容审查且上游已计费（排除 JSON 误解析等可退款场景）。
 func IsUpstreamChargedContentPolicyFailure(reason string) bool {
 	if IsUpstreamRefundableTaskFailure(reason) {
 		return false
