@@ -246,6 +246,34 @@ func taskListPrivateDataSelectExpr() string {
 	}
 }
 
+// taskPrivateDataWithoutSnapshotExpr projects private_data without request_snapshot,
+// avoiding multi-MB reads on status fetch and unfinished-task polling.
+func taskPrivateDataWithoutSnapshotExpr() string {
+	switch {
+	case common.UsingPostgreSQL:
+		return `(COALESCE(private_data, '{}'::jsonb) - 'request_snapshot')::json`
+	case common.UsingMySQL:
+		return `JSON_REMOVE(COALESCE(private_data, JSON_OBJECT()), '$.request_snapshot')`
+	default:
+		return `json_remove(COALESCE(private_data, '{}'), '$.request_snapshot')`
+	}
+}
+
+func taskFetchSelectClause() string {
+	return strings.Join([]string{
+		"id", "created_at", "updated_at", "task_id", "platform", "user_id",
+		commonGroupCol,
+		"channel_id", "quota", "action", "status", "fail_reason",
+		"submit_time", "start_time", "finish_time", "progress",
+		"properties", "data",
+		taskPrivateDataWithoutSnapshotExpr() + " AS private_data",
+	}, ", ")
+}
+
+func applyTaskFetchSelect(query *gorm.DB) *gorm.DB {
+	return query.Select(taskFetchSelectClause())
+}
+
 func taskListSelectClause(includeChannelID bool) string {
 	cols := []string{
 		"id", "created_at", "updated_at", "task_id", "platform", "user_id",
@@ -366,7 +394,10 @@ func GetAllUnFinishSyncTasks(limit int) []*Task {
 	var tasks []*Task
 	var err error
 	// get all tasks progress is not 100%
-	err = DB.Where("progress != ?", "100%").Where("status != ?", TaskStatusFailure).Where("status != ?", TaskStatusSuccess).Limit(limit).Order("id").Find(&tasks).Error
+	err = applyTaskFetchSelect(DB.Where("progress != ?", "100%").
+		Where("status != ?", TaskStatusFailure).
+		Where("status != ?", TaskStatusSuccess)).
+		Limit(limit).Order("id").Find(&tasks).Error
 	if err != nil {
 		return nil
 	}
@@ -423,6 +454,22 @@ func GetByTaskId(userId int, taskId string) (*Task, bool, error) {
 	return task, exist, err
 }
 
+// GetByTaskIdForFetch loads a task for read-only status/result endpoints without
+// reading private_data.request_snapshot.
+func GetByTaskIdForFetch(userId int, taskId string) (*Task, bool, error) {
+	if taskId == "" {
+		return nil, false, nil
+	}
+	var task *Task
+	err := applyTaskFetchSelect(DB.Where("user_id = ? and task_id = ?", userId, taskId)).
+		First(&task).Error
+	exist, err := RecordExist(err)
+	if err != nil {
+		return nil, false, err
+	}
+	return task, exist, err
+}
+
 func GetByTaskIds(userId int, taskIds []any) ([]*Task, error) {
 	if len(taskIds) == 0 {
 		return nil, nil
@@ -435,6 +482,20 @@ func GetByTaskIds(userId int, taskIds []any) ([]*Task, error) {
 		return nil, err
 	}
 	return task, nil
+}
+
+// GetByTaskIdsForFetch is the batch variant of GetByTaskIdForFetch.
+func GetByTaskIdsForFetch(userId int, taskIds []any) ([]*Task, error) {
+	if len(taskIds) == 0 {
+		return nil, nil
+	}
+	var tasks []*Task
+	err := applyTaskFetchSelect(DB.Where("user_id = ? and task_id in (?)", userId, taskIds)).
+		Find(&tasks).Error
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
 
 func (Task *Task) Insert() error {

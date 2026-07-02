@@ -45,7 +45,7 @@ func imageFetchByIDRespBodyBuilder(c *gin.Context) (respBody []byte, taskResp *d
 		taskID = c.GetString("task_id")
 	}
 	userID := c.GetInt("id")
-	originTask, exist, err := model.GetByTaskId(userID, taskID)
+	originTask, exist, err := model.GetByTaskIdForFetch(userID, taskID)
 	if err != nil {
 		taskResp = service.TaskErrorWrapper(err, "get_task_failed", http.StatusInternalServerError)
 		return
