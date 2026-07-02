@@ -10,6 +10,7 @@ import (
 
 func TestGulieImagePatcherMatch(t *testing.T) {
 	p := gulieImagePatcher{}
+	require.True(t, p.Match("cy-img1-gpt-image-2"))
 	require.True(t, p.Match("gulie-gpt-image-2"))
 	require.False(t, p.Match("kedaya-gpt-image-2"))
 }
