@@ -11,12 +11,17 @@ ENDPOINTS = [
     {
         "method": "POST",
         "path": "{{base}}/chat/completions",
-        "description": "同步文生图/图生图（stream 须为 false）。",
-    }
+        "description": "OpenAI 兼容：同步文生图/图生图（stream 须为 false）。",
+    },
+    {
+        "method": "POST",
+        "path": "{{base}}beta/models/{{model}}:generateContent",
+        "description": "Gemini 原生 generateContent（Authorization: Bearer 或 x-goog-api-key）。",
+    },
 ]
 
-PARAMS = [
-    {"name": "model", "description": "必填，固定传 0lll0-gemini-3.1-flash-lite-image。"},
+OPENAI_PARAMS = [
+    {"name": "model", "description": "必填，固定传模型广场展示名（{{model}}）。"},
     {
         "name": "messages",
         "description": "必填，OpenAI 消息数组。文生图 user.content 为字符串；图生图/参考图为 content 数组（text + image_url）。",
@@ -36,11 +41,11 @@ PARAMS = [
     {"name": "stream", "description": "须为 false（同步 JSON 响应，非 SSE）。"},
     {
         "name": "extra_body.google.image_config.aspect_ratio",
-        "description": "画幅比例：1:1、2:3、3:2、3:4、4:3、4:5、5:4、9:16、16:9、21:9 等；auto 可省略（有参考图时可由上游推断）。",
+        "description": "画幅比例：1:1、2:3、3:2、3:4、4:3、4:5、5:4、9:16、16:9、21:9 等；auto 可省略（有参考图时可自动推断）。",
     },
     {
         "name": "extra_body.google.image_config.image_size",
-        "description": "仅支持 1K（K 大写）；省略或 auto 时上游默认 1K。勿传 2K/4K。",
+        "description": "仅支持 1K（K 大写）；省略或 auto 时默认 1K。勿传 2K/4K。",
     },
     {
         "name": "n",
@@ -48,7 +53,30 @@ PARAMS = [
     },
 ]
 
-CREATE_RESP = {
+GEMINI_PARAMS = [
+    {
+        "name": "contents[].parts[].text",
+        "description": "v1beta 文生图提示词（Gemini 原生 contents/parts 结构）。",
+    },
+    {
+        "name": "contents[].parts[].inlineData",
+        "description": "v1beta 参考图/蒙版：base64 图片，mimeType 如 image/png、image/jpeg。",
+    },
+    {
+        "name": "generationConfig.responseModalities",
+        "description": "须包含 TEXT 与 IMAGE，例如 [\"TEXT\", \"IMAGE\"]。",
+    },
+    {
+        "name": "generationConfig.imageConfig.aspectRatio",
+        "description": "画幅比例：1:1、3:2、16:9 等；与 OpenAI 路径 aspect_ratio 等价（camelCase）。",
+    },
+    {
+        "name": "generationConfig.imageConfig.imageSize",
+        "description": "仅支持 1K（K 大写）；省略时默认 1K。勿传 2K/4K。",
+    },
+]
+
+CHAT_CREATE_RESP = {
     "choices": [
         {
             "message": {
@@ -59,16 +87,32 @@ CREATE_RESP = {
     ]
 }
 
+GEMINI_CREATE_RESP = {
+    "candidates": [
+        {
+            "content": {
+                "role": "model",
+                "parts": [
+                    {"inlineData": {"mimeType": "image/jpeg", "data": "..."}},
+                ],
+            }
+        }
+    ]
+}
+
 DOC = {
     "dispatch_mode": "sync",
     "intro": (
-        "Gemini 3.1 Flash Lite 图像生成（0lll0 渠道）。按次 ¥0.20/张，仅支持 1K 出图。"
-        "POST /v1/chat/completions（stream 须 false），图片嵌在 assistant message 的 Markdown data URI 中。"
-        "画幅用 extra_body.google.image_config 的 aspect_ratio 控制；image_size 仅可 1K 或省略，勿传 2K/4K。"
-        "带参考图/蒙版时 messages[0].content 为 text + image_url 数组（非 /images/generations）。"
+        "Gemini 3.1 Flash Lite 图像生成：同步出图，仅支持 1K。"
+        "支持两种调用方式：① OpenAI 兼容 POST /v1/chat/completions（stream 须 false），"
+        "图片嵌在 assistant message 的 Markdown data URI 中，画幅用 extra_body.google.image_config；"
+        "② Gemini 原生 POST /v1beta/models/{model}:generateContent，"
+        "图片在 candidates[].content.parts[].inlineData 中。"
+        "鉴权可用 Authorization: Bearer 或 x-goog-api-key。"
+        "带参考图/蒙版时 OpenAI 路径用 messages content 数组；v1beta 路径用 contents parts 内联图片。"
     ),
     "endpoints": ENDPOINTS,
-    "params": PARAMS,
+    "params": OPENAI_PARAMS + GEMINI_PARAMS,
     "basic_request_json": {
         "model": "{{model}}",
         "stream": False,
@@ -83,27 +127,86 @@ DOC = {
         },
     },
     "request_json": {
-        "model": "{{model}}",
-        "stream": False,
-        "messages": [
+        "contents": [
             {
                 "role": "user",
-                "content": [
-                    {"type": "text", "text": "将 @图1 的风格应用到新场景"},
-                    {"type": "image_url", "image_url": {"url": "https://example.com/ref.png"}},
-                ],
+                "parts": [{"text": "一只橘猫坐在窗台上，水彩画风格，午后阳光"}],
             }
         ],
-        "extra_body": {
-            "google": {
-                "image_config": {
-                    "aspect_ratio": "3:2",
-                    "image_size": "1K",
-                }
-            }
+        "generationConfig": {
+            "responseModalities": ["TEXT", "IMAGE"],
+            "imageConfig": {"aspectRatio": "1:1", "imageSize": "1K"},
         },
     },
-    "create_response_json": CREATE_RESP,
+    "examples": [
+        {
+            "title": "OpenAI chat：文生图",
+            "request_json": {
+                "model": "{{model}}",
+                "stream": False,
+                "messages": [{"role": "user", "content": "一只橘猫，水彩风格"}],
+                "extra_body": {
+                    "google": {
+                        "image_config": {
+                            "aspect_ratio": "1:1",
+                            "image_size": "1K",
+                        }
+                    }
+                },
+            },
+        },
+        {
+            "title": "OpenAI chat：参考图",
+            "request_json": {
+                "model": "{{model}}",
+                "stream": False,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "将 @图1 的风格应用到新场景"},
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": "https://example.com/ref.png"},
+                            },
+                        ],
+                    }
+                ],
+                "extra_body": {
+                    "google": {
+                        "image_config": {
+                            "aspect_ratio": "3:2",
+                            "image_size": "1K",
+                        }
+                    }
+                },
+            },
+        },
+        {
+            "title": "Gemini v1beta：参考图",
+            "request_json": {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [
+                            {"text": "将参考图的风格应用到新场景"},
+                            {
+                                "inlineData": {
+                                    "mimeType": "image/png",
+                                    "data": "...",
+                                }
+                            },
+                        ],
+                    }
+                ],
+                "generationConfig": {
+                    "responseModalities": ["TEXT", "IMAGE"],
+                    "imageConfig": {"aspectRatio": "3:2", "imageSize": "1K"},
+                },
+            },
+        },
+    ],
+    "create_response_json": CHAT_CREATE_RESP,
     "query_response_json": None,
 }
 
@@ -140,6 +243,9 @@ PROFILE_PARAMS = {
 PROFILE_HINTS = [
     {"text": "Flash Lite 图像模型仅支持 1K 出图（约 1024px），不支持 2K/4K。"},
     {"text": "请使用 1:1、16:9 等比例；quality 选 1K 或自动即可。"},
+    {
+        "text": "亦支持 Gemini 原生 POST /v1beta/models/{model}:generateContent（Authorization 或 x-goog-api-key）。",
+    },
 ]
 
 
@@ -200,7 +306,8 @@ def main() -> None:
     )
     print(f"updated {MODEL_NAME}")
     psql(
-        f"SELECT model_name, image_profile_id, length(api_doc) AS doc_len "
+        f"SELECT model_name, image_profile_id, length(api_doc) AS doc_len, "
+        f"CASE WHEN api_doc LIKE '%v1beta%' THEN 'yes' ELSE 'no' END AS has_v1beta "
         f"FROM models WHERE model_name = '{MODEL_NAME}' AND deleted_at IS NULL;"
     )
 
