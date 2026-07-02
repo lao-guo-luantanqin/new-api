@@ -11,7 +11,7 @@ import (
 type gulieImagePatcher struct{}
 
 func (gulieImagePatcher) Match(originModel string) bool {
-	return matchModelPrefix(originModel, "gulie-")
+	return matchModelPrefix(originModel, "cy-img1-") || matchModelPrefix(originModel, "gulie-")
 }
 
 func (gulieImagePatcher) Apply(request *dto.ImageRequest) (ImageTransformResult, error) {
